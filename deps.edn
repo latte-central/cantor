@@ -1,0 +1,13 @@
+{:deps
+ 
+ {;; We need the (typed) set theory library
+  io.github.latte-central/latte-sets
+  {:git/sha "d9206212a53d53513ebc4ac761be88ded4accae5"}
+  
+  ;; We use clerk for nicer notebook view
+  io.github.nextjournal/clerk {:mvn/version "0.2.214"}}}
+
+
+
+
+
