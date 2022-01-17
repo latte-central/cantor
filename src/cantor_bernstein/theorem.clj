@@ -30,7 +30,7 @@
 ;; The breakthrough idea, unanimously attributed to Georg Cantor,
 ;; relies on the notion of an **injective function**.
 ;;
-;; Here is the definition proposed by the [[latte-predlude]]:
+;; Here is the definition proposed by the [[latte-prelude]]:
 ;;
 
 (comment
@@ -46,9 +46,26 @@
 ;; *iff*: $$∀x,y ∈ T,~f(x) = f(y) \implies x = y$$
 ;;
 ;; The problem with the above `definition` is that it is
-;; *type-theoretic*. Since we are interested by comparing
-;; sets, we need a light more complex but more adequate
-;; definition:
+;; *type-theoretic*, i.e. the $T$ and $U$ in the definition above are
+;; types and not sets. One important difference is that type "membership"
+;; (called *inhabitation*) is decidable (at least in LaTTe) whereas
+;; it is not in the theory of sets.
+
+
+;; ## A relational detour
+
+;; Thankfully, it is possible to formalize sets in type theory,
+;; in various ways. LaTTe uses the so-called *predicative* approach,
+;; which considers sets as predicates: the set of elements satisfiying
+;; some predicate $P$ is the predicate $P$ itself.
+;; A set of element of type `T` uses the type `(set T)` as a shortcut to `(==> T :type)`
+;; which is the type of predicates over `T`.
+;; Moreover, instead of considering relations as sets of pairs, which
+;; is possible, LaTTe favors the privileded type-theoretic approach
+;; of considering the type `(rel T U)` of relation $T\times U$ as a shortcut
+;; to `(==> T U =type)` i.e. binary predicates over `T` and `U`.
+
+;; This leads to the following relational interpretation of injectivity: 
 
 (comment
 (definition injective
@@ -61,10 +78,19 @@
                (f x2 y2)
                (equal y1 y2)
                (equal x1 x2)))))))
-  )
+)
 
-;; This defines what it is for a *relation* to be injective.
-;; To ensure that it is *also* a function, we need also the following:
+;; One important difference with the relational approach is that
+;; we need to write `(f x y)` as a replacement for the
+;; classical mathematic notation $y=f(x)$
+;; I a more traditional proof of the theorem, one would use
+;; the set-theoretic interpretation of functions, i.e. something
+;; like $(x,y) \in f$ rather than a relational notation.
+
+;; Hence, the former definition explains what it is for a *relation* to be
+;; injective, or rather to possess the property of injectivity.
+;; To be *injective* (or an *injection*) we must also  ensure that
+;; $f$ is *also* a function, hence we need also the following:
 
 (comment
   (definition functional
@@ -81,8 +107,8 @@
 ;; in the sense that it is deterministic: if $f(x)=y1$ and $f(y)=y2$
 ;; then $y1=y_2$.
 
-;; We also need the relation/function to be *serial*, i.e. that
-;; it is defined on its while domain `from`.
+;; We also need the relation/function to be *serial* (or *total*), i.e. that
+;; it is defined on its while domain, which is the set calle `from`.
 
 (comment
     "The relation `f` covers all of (is total wrt.) the provided `from` domain set."
@@ -92,3 +118,5 @@
          (f x y)))
     )
 
+;; In a more classical notation, we would write:
+;; $$\forall x \in from,~\exists y \in to,~y=f(x)$$
