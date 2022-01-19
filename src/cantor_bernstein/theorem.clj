@@ -1,6 +1,9 @@
 (ns cantor-bernstein.theorem
   "A proof of the Cantor-Bernstein(-Schroeder) theorem
   in LaTTe"
+
+  (:refer-clojure :exclude [and or not set])
+  
   (:require
    ;; for notebook presentation
    [nextjournal.clerk :as clerk]
@@ -10,7 +13,24 @@
    [latte.core :as latte
     :refer [definition defthm defaxiom defnotation
             forall lambda defimplicit deflemma qed
-            assume have pose proof try-proof lambda forall]]))
+            assume have pose proof try-proof lambda forall]]
+
+   ;; propositional logic
+   [latte-prelude.prop :as p :refer [and and* or not]]
+
+   ;; basic sets
+   [latte-sets.set :as s :refer [set]]
+
+   ;; basic relations
+   [latte-sets.rel :as rel :refer [rel]]
+   
+   ;; relations as partial functions
+   [latte-sets.pfun :as pfun :refer [functional serial injective]]
+   
+   ;; quantifying relations
+   [latte-sets.powerrel :as prel :refer [powerrel rel-ex]]
+
+   ))
 
 ;; # The Cantor-Bernstein theorem
 
@@ -111,12 +131,49 @@
 ;; it is defined on its while domain, which is the set calle `from`.
 
 (comment
+  (definition serial
     "The relation `f` covers all of (is total wrt.) the provided `from` domain set."
     [[?T ?U :type], f (rel T U), from (set T), to (set U)]
     (forall-in [x from]
        (exists-in [y to]
          (f x y)))
     )
+  )
 
 ;; In a more classical notation, we would write:
 ;; $$\forall x \in from,~\exists y \in to,~y=f(x)$$
+
+;; ## Comparing sets (take 2)
+
+;; We have now everything we need to give a formal definition
+;; for a set to be *smaller* than another set, which is valid
+;; even in the infinite case.
+
+;; First, we formalize the set of (relational) functions
+;; that are injective from domain $e_1$ and range $e_2$.
+
+(definition ≲-prop
+  [[?T ?U :type], e1 (set T), e2 (set U)]
+  (lambda [f (rel T U)]
+    (and* (functional f e1 e2)
+          (serial f e1 e2)
+          (injective f e1 e2))))
+
+;; In the traditional notation we would write this set as:
+;; $$\{f \in e_1 \rightarrow e_2  \mid ∀x ∈ e_1, \forall y ∈ e_2,~f(x) = f(y) \implies x = y \}$$
+;; (keeping implicit the details of what makes $f$ a total function)
+
+;; This gives our definition of the *smaller-than* comparator for sets
+;; as follows:
+
+(definition ≲
+  "Set `e1` is *smaller* than set `e2`
+(according to Cantor)."
+  [[?T ?U :type], e1 (set T), e2 (set U)]
+  (rel-ex (≲-prop e1 e2)))
+
+;; The informal meaning is that $e_1$ is *smaller than* $e_2$,
+;; which is denoted by $e_1 ≲ e_2$  (or `(≲ e1 e2)` in the Clojure notation)
+;; iff there exists a relation $f$ in the set defined by `≲-prop`, i.e.
+;; iff there exist an injection $f$ between $e_1$ and $e_2$.
+
