@@ -3,10 +3,11 @@
   )
 
 (defn start-clerk! []
-  (clerk/serve! {:watch-paths ["src"]}))
+  (clerk/serve! {:browse true, :watch-paths ["src"]}))
 
 
 (comment
+  (start-clerk!)
   (clerk/show! "src/cantor_bernstein/theorem.clj")
   )
 
