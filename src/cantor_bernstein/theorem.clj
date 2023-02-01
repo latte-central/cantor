@@ -368,6 +368,5 @@
     "Subset case"
     (assume [x T
              Hx (elem x (diff s1 ((cb-aux-fun f g s1 s2) C)))]
-      ()
-      ))
-)
+      )
+))

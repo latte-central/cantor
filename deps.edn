@@ -2,7 +2,7 @@
  
  {;; We need the (typed) set theory library
   io.github.latte-central/latte-sets
-  {:git/sha "7fba84e405f5c631a4a913b18e6439887ff26568"}
+  {:git/sha "4cb402f839962643874acc45caa1c23ebf3d0756"}
   
   ;; We use clerk for nicer notebook view
   io.github.nextjournal/clerk {:mvn/version "0.12.707"}}}
