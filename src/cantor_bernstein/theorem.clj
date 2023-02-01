@@ -6,8 +6,8 @@
   
   (:require
    ;; for notebook presentation
-   [nextjournal.clerk :as clerk]
-   [nextjournal.clerk.viewer :as v]
+   ;;[nextjournal.clerk :as clerk]
+   ;;[nextjournal.clerk.viewer :as v]
 
    ;; latte dependencies
    [latte.core :as latte
@@ -22,7 +22,7 @@
    [latte-sets.set :as s :refer [set elem subset seteq]]
 
    ;; boolean algebra for sets
-   [latte-sets.algebra :as alg :refer [diff]]
+   [latte-sets.algebra :as alg :refer [inter diff]]
 
    ;; basic relations
    [latte-sets.rel :as rel :refer [rel]]
@@ -292,7 +292,7 @@
 
 ;; A crucial, and quite technical, lemma for the proof is the following one.
 
-(deflemma cb-aux
+(deflemma round-trip
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
   (set-ex (lambda [X (set T)]
             (and (subset X s1)
@@ -323,24 +323,24 @@
 
 ;; To prove this lemma, we use the following definition :
 
-(definition cb-aux-fun
+(definition rt-fun
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
   (lambda [C (set T)]
     (diff s1 (image g (diff s2 (image f C s2)) s1))))
 
 ;; This function enjoys a few properties. The first one is as follows :
 
-(deflemma cb-aux-fun-prop1
+(deflemma rt-fun-prop1
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
   (forall [C (set T)]
     (==> (subset C s1)
-         (subset ((cb-aux-fun f g s1 s2) C) s1))))
+         (subset ((rt-fun f g s1 s2) C) s1))))
 
-(proof 'cb-aux-fun-prop1-lemma
+(proof 'rt-fun-prop1-lemma
   (assume [C _
            HC _]
     (assume [x T
-             Hx (elem x ((cb-aux-fun f g s1 s2) C))]
+             Hx (elem x ((rt-fun f g s1 s2) C))]
 
       "We have now to prove `(elem x s1)`"
 
@@ -355,18 +355,35 @@
 
 ;; Moreover, we have the following property:
 
-(deflemma cb-aux-fun-prop2
+(deflemma rt-fun-prop2
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
   (forall [C (set T)]
-    (==> (subset C s1)
-         (seteq (diff s1 ((cb-aux-fun f g s1 s2) C))
-                (image g (diff s2 (image f C s2)) s1)))))
+    (seteq (diff s1 ((rt-fun f g s1 s2) C))
+           (image g (diff s2 (image f C s2)) s1))))
 
-(try-proof 'cb-aux-fun-prop2-lemma
-  (assume [C _
-           HC _]
+(proof 'rt-fun-prop2-lemma
+  (assume [C (set T)]
     "Subset case"
     (assume [x T
-             Hx (elem x (diff s1 ((cb-aux-fun f g s1 s2) C)))]
-      )
-))
+             Hx (elem x (diff s1 ((rt-fun f g s1 s2) C)))]
+      "We use the fact that `X / X / Y` is the same set as `X ∩ Y`"
+      (have <a1> (elem x (inter s1 (image g (diff s2 (image f C s2)) s1)))
+            :by ((p/and-elim-left (alg/diff-diff s1 (image g (diff s2 (image f C s2)) s1)))
+                 x Hx))
+      (have <a> (elem x (image g (diff s2 (image f C s2)) s1))
+            :by (p/and-elim-right <a1>)))
+
+    "Superset case"
+    (assume [x T
+             Hx (elem x (image g (diff s2 (image f C s2)) s1))]
+      (have <b> (elem x s1) :by (p/and-elim-left Hx))
+      "By contradiction"
+      (assume [Hcontra (elem x ((rt-fun f g s1 s2) C))]
+        (have <c> p/absurd :by ((p/and-elim-right Hcontra) Hx)))
+      
+      (have <d> (elem x (diff s1 ((rt-fun f g s1 s2) C)))
+            :by (p/and-intro <b> <c>)))
+
+    (have <e> _ :by (p/and-intro <a> <d>)))
+  (qed <e>))
+
