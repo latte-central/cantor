@@ -397,7 +397,7 @@
          (seteq ((rt-fun f g s1 s2) X) X)
          (round-trip-prop f g s1 s2 X))))
 
-(try-proof 'round-trip-cond-lemma
+(proof 'round-trip-cond-lemma
   (assume [X _
            HX1 _
            HX2 _]
@@ -415,3 +415,18 @@
           :by (p/and-intro HX1 <a>)))
 
   (qed <b>))
+
+(deflemma rt-claim1
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
+  (forall [C D (set T)]
+    (==> (subset C s1)
+         (subset D s1)
+         (subset C D)
+         (subset ((rt-fun f g s1 s2) C) ((rt-fun f g s1 s2) D)))))
+
+(try-proof 'rt-claim1-lemma
+  (assume [C _ D _ HC _ HD _ Hsub _]
+    (assume [x T
+             Hx (elem x ((rt-fun f g s1 s2) C))]
+      )
+))
