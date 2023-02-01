@@ -393,13 +393,25 @@
 (deflemma round-trip-cond
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
   (forall  [X (set T)]
-    (==> (seteq ((rt-fun f g s1 s2) X) X)
+    (==> (subset X s1)
+         (seteq ((rt-fun f g s1 s2) X) X)
          (round-trip-prop f g s1 s2 X))))
 
 (try-proof 'round-trip-cond-lemma
   (assume [X _
-           HX _]
-    #_(have <b> (seteq (diff s1 X)
-                     (image g (diff s2 (image f X s2)) s1))
-          :by ((rt-fun-prop2 f g s1 s2) X)
-)))
+           HX1 _
+           HX2 _]
+    (pose P := (lambda [Z (set T)]
+                 (seteq (diff s1 Z)
+                        (image g (diff s2 (image f X s2)) s1))))
+    (have <a1> (P ((rt-fun f g s1 s2) X))
+          :by ((rt-fun-prop2 f g s1 s2) X))
+    (have <a2> (P X) :by ((s/seteq-subst-prop P ((rt-fun f g s1 s2) X) X)
+                         HX2 <a1>))
+    (have <a> _ :by ((s/seteq-sym (diff s1 X) (image g (diff s2 (image f X s2)) s1))
+                     <a2>))
+
+    (have <b> (round-trip-prop f g s1 s2 X)
+          :by (p/and-intro HX1 <a>)))
+
+  (qed <b>))
