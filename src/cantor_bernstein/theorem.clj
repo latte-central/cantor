@@ -292,12 +292,15 @@
 
 ;; A crucial, and quite technical, lemma for the proof is the following one.
 
+(definition round-trip-prop
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
+  (and (subset X s1)
+       (seteq (image g (diff s2 (image f X s2)) s1)
+              (diff s1 X))))
+
 (deflemma round-trip
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
-  (set-ex (lambda [X (set T)]
-            (and (subset X s1)
-                 (seteq (image g (diff s2 (image f X s2)) s1)
-                        (diff s1 X))))))
+  (set-ex (lambda [X (set T)] (round-trip-prop f g s1 s2 X))))
 
 ;; This is quite a mouthfull! This relies on several definitions we have
 ;; not yet presented.
@@ -387,3 +390,16 @@
     (have <e> _ :by (p/and-intro <a> <d>)))
   (qed <e>))
 
+(deflemma round-trip-cond
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
+  (forall  [X (set T)]
+    (==> (seteq ((rt-fun f g s1 s2) X) X)
+         (round-trip-prop f g s1 s2 X))))
+
+(try-proof 'round-trip-cond-lemma
+  (assume [X _
+           HX _]
+    #_(have <b> (seteq (diff s1 X)
+                     (image g (diff s2 (image f X s2)) s1))
+          :by ((rt-fun-prop2 f g s1 s2) X)
+)))
