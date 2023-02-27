@@ -419,13 +419,11 @@
 (deflemma rt-claim1
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
   (forall [C D (set T)]
-    (==> (subset C s1)
-         (subset D s1)
-         (subset C D)
+    (==> (subset C D)
          (subset ((rt-fun f g s1 s2) C) ((rt-fun f g s1 s2) D)))))
 
 (proof 'rt-claim1-lemma
-  (assume [C _ D _ HC _ HD _ Hsub _]
+  (assume [C _ D _ Hsub _]
 
     (have <a> (subset (image f C s2)
                       (image f D s2))
