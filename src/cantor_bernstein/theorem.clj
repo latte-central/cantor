@@ -424,9 +424,31 @@
          (subset C D)
          (subset ((rt-fun f g s1 s2) C) ((rt-fun f g s1 s2) D)))))
 
-(try-proof 'rt-claim1-lemma
+(proof 'rt-claim1-lemma
   (assume [C _ D _ HC _ HD _ Hsub _]
-    (assume [x T
-             Hx (elem x ((rt-fun f g s1 s2) C))]
-      )
-))
+
+    (have <a> (subset (image f C s2)
+                      (image f D s2))
+          :by ((pfun/image-subset-monotonous f C D s2) Hsub))
+
+    (have <b> (subset (diff s2 (image f D s2))
+                      (diff s2 (image f C s2)))
+          :by ((alg/diff-subset-antimonotonous s2 
+                                               (image f C s2) 
+                                               (image f D s2)) 
+               <a>))
+
+    (have <c> (subset (image g (diff s2 (image f D s2)) s1)
+                      (image g (diff s2 (image f C s2)) s1))
+          :by ((pfun/image-subset-monotonous g 
+                                             (diff s2 (image f D s2)) 
+                                             (diff s2 (image f C s2)) s1)
+               <b>))
+
+    (have <d> (subset ((rt-fun f g s1 s2) C) ((rt-fun f g s1 s2) D))
+          :by ((alg/diff-subset-antimonotonous s1 
+                                               (image g (diff s2 (image f D s2)) s1)
+                                               (image g (diff s2 (image f C s2)) s1))
+               <c>)))
+
+  (qed <d>))
