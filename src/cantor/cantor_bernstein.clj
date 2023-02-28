@@ -549,6 +549,11 @@
         (rt-inter-prop1 f g s1 s2)
         (rt-fun-inter-fixpoint f g s1 s2))))
 
+(proof 'round-trip-lemma
+  (qed ((pset/set-ex-intro (lambda [X (set T)] (round-trip-prop f g s1 s2 X))
+                           (rt-inter f g s1 s2))
+        (round-trip-inter f g s1 s2))))
+
 
 
 
