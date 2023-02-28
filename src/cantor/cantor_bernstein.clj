@@ -450,3 +450,105 @@
                <c>)))
 
   (qed <d>))
+
+(definition rt-set
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
+  (lambda [s (set T)]
+    (and (subset s s1) (subset ((rt-fun f g s1 s2) s) s))))
+
+(definition rt-inter
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
+  (pset/intersections (rt-set f g s1 s2)))
+
+(deflemma rt-inter-prop1
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
+  (subset (rt-inter f g s1 s2) s1))
+
+(proof 'rt-inter-prop1-lemma
+  (have <a> (subset s1 s1) :by (s/subset-refl s1))
+  (have <b> (subset ((rt-fun f g s1 s2) s1) s1)
+        :by ((rt-fun-prop1 f g s1 s2) s1 <a>))
+  (have <c> (pset/set-elem s1 (rt-set f g s1 s2))
+        :by (p/and-intro <a> <b>))
+  (have <d> (subset (rt-inter f g s1 s2) s1)
+        :by ((pset/intersections-lower-bound (rt-set f g s1 s2))
+             s1 <c>))
+  (qed <d>))
+
+(deflemma rt-inter-prop2
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
+  (subset ((rt-fun f g s1 s2) (rt-inter f g s1 s2)) s1))
+
+(proof 'rt-inter-prop2-lemma
+  (qed ((rt-fun-prop1 f g s1 s2)
+        (rt-inter f g s1 s2)
+        (rt-inter-prop1 f g s1 s2))))
+
+(deflemma rt-fun-inter-fixpoint
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
+  (seteq ((rt-fun f g s1 s2) (rt-inter f g s1 s2))
+         (rt-inter f g s1 s2)))
+
+(deflemma rt-fun-inter-fix-sub
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
+  (subset ((rt-fun f g s1 s2) (rt-inter f g s1 s2))
+          (rt-inter f g s1 s2)))
+
+(proof 'rt-fun-inter-fix-sub-lemma
+  (assume [y T
+           Hy (elem y ((rt-fun f g s1 s2) (rt-inter f g s1 s2)))]
+    (assume [s (set T)
+             Hs (pset/set-elem s (rt-set f g s1 s2))]
+      "We need to show that y∈s"
+      (have <a> (subset (rt-inter f g s1 s2) s)
+            :by ((pset/intersections-lower-bound (rt-set f g s1 s2)) s Hs))
+      (have <b> (subset ((rt-fun f g s1 s2) (rt-inter f g s1 s2))
+                        ((rt-fun f g s1 s2) s))
+            :by ((rt-claim1 f g s1 s2) (rt-inter f g s1 s2) s <a>))
+      (have <c> (subset ((rt-fun f g s1 s2) s) s)
+            :by (p/and-elim-right Hs))
+      (have <d> (subset ((rt-fun f g s1 s2) (rt-inter f g s1 s2)) s)
+            :by ((s/subset-trans ((rt-fun f g s1 s2) (rt-inter f g s1 s2))
+                                 ((rt-fun f g s1 s2) s)
+                                 s) <b> <c>))
+      (have <e> (elem y s) :by (<d> y Hy))))
+  (qed <e>))
+
+(deflemma rt-fun-inter-fix-super
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
+  (subset (rt-inter f g s1 s2)
+          ((rt-fun f g s1 s2) (rt-inter f g s1 s2))))
+
+(proof 'rt-fun-inter-fix-super-lemma
+  (have <a> (subset ((rt-fun f g s1 s2) (rt-inter f g s1 s2))
+                    (rt-inter f g s1 s2))
+        :by (rt-fun-inter-fix-sub f g s1 s2))
+  (have <b> (subset ((rt-fun f g s1 s2) ((rt-fun f g s1 s2) (rt-inter f g s1 s2)))
+                    ((rt-fun f g s1 s2) (rt-inter f g s1 s2)))
+        :by ((rt-claim1 f g s1 s2) 
+             ((rt-fun f g s1 s2) (rt-inter f g s1 s2))
+             (rt-inter f g s1 s2)
+             <a>))
+  (have <c> (pset/set-elem ((rt-fun f g s1 s2) (rt-inter f g s1 s2)) (rt-set f g s1 s2))
+        :by (p/and-intro (rt-inter-prop2 f g s1 s2) <b>))
+  (qed ((pset/intersections-lower-bound (rt-set f g s1 s2))
+        ((rt-fun f g s1 s2) (rt-inter f g s1 s2)) <c>)))
+
+(proof 'rt-fun-inter-fixpoint-lemma
+  (qed (p/and-intro (rt-fun-inter-fix-sub f g s1 s2)
+                    (rt-fun-inter-fix-super f g s1 s2))))
+
+
+(deflemma round-trip-inter
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)]]
+  (round-trip-prop f g s1 s2 (rt-inter f g s1 s2)))
+
+(proof 'round-trip-inter-lemma
+  (qed ((round-trip-cond f g s1 s2)
+        (rt-inter f g s1 s2)
+        (rt-inter-prop1 f g s1 s2)
+        (rt-fun-inter-fixpoint f g s1 s2))))
+
+
+
+
