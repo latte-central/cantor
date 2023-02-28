@@ -1,4 +1,4 @@
-(ns cantor-bernstein.core
+(ns cantor.core
   (:require [nextjournal.clerk :as clerk])
   )
 
