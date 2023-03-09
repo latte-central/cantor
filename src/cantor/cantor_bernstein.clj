@@ -26,6 +26,7 @@
 
    ;; basic relations
    [latte-sets.rel :as rel :refer [rel]]
+   [latte-sets.ralgebra :as ralg :refer [rinverse]]
    
    ;; relations as partial functions
    [latte-sets.pfun :as pfun :refer [functional serial injective injection bijection
@@ -555,5 +556,26 @@
         (round-trip-inter f g s1 s2))))
 
 
+(comment
+(deflemma rt-indom
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
+  (==> (injection g s2 s1)
+       (subset ))) 
+)
+
+(definition cb-assumptions
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
+  (and* (injection f s1 s2)
+        (injection g s2 s1)
+        (round-trip-prop f g s1 s2 X)))
+
+(definition ct-rel
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
+  (lambda [x T]
+    (lambda [y U]
+      (and (==> (elem x X) (f x y))
+           (==> (elem x (diff s1 X)) ((rinverse g) x y))))))
 
 
+
+  
