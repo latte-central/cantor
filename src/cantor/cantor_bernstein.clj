@@ -22,7 +22,7 @@
    [latte-sets.set :as s :refer [set elem subset seteq]]
 
    ;; boolean algebra for sets
-   [latte-sets.algebra :as alg :refer [inter diff]]
+   [latte-sets.algebra :as alg :refer [inter diff disjoint]]
 
    ;; basic relations
    [latte-sets.rel :as rel :refer [rel]]
@@ -557,17 +557,40 @@
 
 
 (comment
-(deflemma rt-indom
-  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
-  (==> (injection g s2 s1)
-       (subset ))) 
-)
 
 (definition cb-assumptions
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
   (and* (injection f s1 s2)
         (injection g s2 s1)
         (round-trip-prop f g s1 s2 X)))
+
+(deflemma ct-claim1
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
+  (==> (injection g s2 s1)
+       (round-trip-prop f g s1 s2 X)
+       (subset (image g (image f X s2) s1) X)))
+
+
+(try-proof 'ct-claim1-lemma
+  (assume [Hginj _
+           Hrt _]
+    (have <a> (disjoint (image f X s2) 
+                        (diff s2 (image f X s2)))
+          :by (alg/disjoint-diff (image f X s2) s2))
+
+    (have <b1> (injective g s2 s1) :by (p/and-elim* 3 Hginj))
+    (have <b2> (subset (image f X s2) s2) :by (pfun/image-subset f X s2))
+    (have <b3> (subset (diff s2 (image f X s2)) s2) :by (alg/diff-subset s2 (image f X s2)))
+
+    (have <b> (disjoint (image g (image f X s2) s1)
+                        (image g (diff s2 (image f X s2)) s1))
+          :by ((pfun/injection-img-inter g (image f X s2) (diff s2 (image f X s2)) s2 s1)
+               <b1> <b2> <b3> <a>))
+               
+               
+))
+
+
 
 (definition ct-rel
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
@@ -576,6 +599,5 @@
       (and (==> (elem x X) (f x y))
            (==> (elem x (diff s1 X)) ((rinverse g) x y))))))
 
-
-
   
+)
