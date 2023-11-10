@@ -558,37 +558,58 @@
 
 (comment
 
+
+
 (definition cb-assumptions
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
   (and* (injection f s1 s2)
         (injection g s2 s1)
         (round-trip-prop f g s1 s2 X)))
 
+)
+
 (deflemma ct-claim1
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
-  (==> (injection g s2 s1)
-       (round-trip-prop f g s1 s2 X)
+  (==> (injective g s2 s1)
+       ;; right part of round-trip-prop
+       (seteq (image g (diff s2 (image f X s2)) s1)
+              (diff s1 X))
        (subset (image g (image f X s2) s1) X)))
 
-
-(try-proof 'ct-claim1-lemma
+(proof 'ct-claim1-lemma
   (assume [Hginj _
            Hrt _]
     (have <a> (disjoint (image f X s2) 
                         (diff s2 (image f X s2)))
           :by (alg/disjoint-diff (image f X s2) s2))
 
-    (have <b1> (injective g s2 s1) :by (p/and-elim* 3 Hginj))
     (have <b2> (subset (image f X s2) s2) :by (pfun/image-subset f X s2))
     (have <b3> (subset (diff s2 (image f X s2)) s2) :by (alg/diff-subset s2 (image f X s2)))
 
+    "g[f[X]] ∩ g[s2 - f[X]] = ∅"
     (have <b> (disjoint (image g (image f X s2) s1)
                         (image g (diff s2 (image f X s2)) s1))
           :by ((pfun/injection-img-inter g (image f X s2) (diff s2 (image f X s2)) s2 s1)
-               <b1> <b2> <b3> <a>))
-               
-               
-))
+               Hginj <b2> <b3> <a>))
+
+    "and since g[s2 - f[X]] = s1 - X   (from round-trip-prop)"
+    "then g[f[X]] ∩ (s1 - X) = ∅"
+    (have <d> (disjoint (image g (image f X s2) s1) (diff s1 X)) 
+          :by ((s/seteq-subst-prop (lambda [$ (set T)]
+                                     (disjoint (image g (image f X s2) s1) $))
+                                   (image g (diff s2 (image f X s2)) s1)
+                                   (diff s1 X))
+                     Hrt <b>))
+    "Also g[f[X]] ⊆ s1"
+    (have <e> (subset (image g (image f X s2) s1) s1)
+          :by (pfun/image-subset g (image f X s2) s1))
+
+    "Then we can conclude g[f[X]] ⊆ X"
+    (have <g> (subset (image g (image f X s2) s1) X)
+          :by ((alg/disjoint-diff-subset (image g (image f X s2) s1) X s1)
+               <d> 
+               <e>)))
+  (qed <g>))
 
 
 
