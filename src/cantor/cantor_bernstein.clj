@@ -34,14 +34,14 @@
 
    
    ;; relations as partial functions
-   [latte-sets.pfun :as pfun :refer [functional serial injective injection bijection
+   [latte-sets.pfun :as pfun :refer [functional serial injective surjective injection bijection
                                      image]]
    
    ;; quantifying sets
    [latte-sets.powerset :as pset :refer [powerset set-ex]]
 
-   ;; quantifying relations
-   [latte-sets.powerrel :as prel :refer [powerrel rel-ex]]
+   ;; quanoutifying relations
+r   [latte-sets.powerrel :as prel :refer [powerrel rel-ex]]
 
    ))
 
@@ -624,6 +624,33 @@
       (and (==> (elem x X) (f x y))
            (==> (elem x (diff s1 X)) ((rinverse g) x y))))))
 
+(deflemma ct-rel-left
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
+  (forall [x T]
+    (forall [y U]
+      (==> (elem x X)
+           (f x y)
+           ((ct-rel f g s1 s2 X) x y)))))
+
+(proof 'ct-rel-left-lemma
+  (assume [x T
+           y U
+           H1 (elem x X)
+           H2 (f x y)]
+    "left part - trivial "
+    (assume [Hleft (elem x X)]
+      (have <a> (f x y) :by H2))
+
+    "right part - by contradiction"
+    (assume [Hright (elem x (diff s1 X))]
+      (have <b1> p/absurd :by ((p/and-elim-right Hright) H1))
+      (have <b> _ :by (<b1> ((rinverse g) x y))))
+
+    (have <c> ((ct-rel f g s1 s2 X) x y)
+          :by (p/and-intro <a> <b>)))
+  (qed <c>))
+
+
   
 (deflemma ct-claim2
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
@@ -754,6 +781,58 @@
 
   (qed <k>))
 
+(deflemma ct-claim3
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
+  (==> (injective f s1 s2)
+       (functional g s2 s1)
+       (serial g s2 s1)
+       (injective g s2 s1)
+       (round-trip-prop f g s1 s2 X)
+       (surjective (ct-rel f g s1 s2 X) s1 s2)))
 
+(try-proof 'ct-claim3-lemma
+  (assume [Hfinj _
+           Hgfun _
+           Hgser _
+           Hginj _
+           Hrt _]
+    (pose h := (ct-rel f g s1 s2 X))
+    (assume [y U Hy (elem y s2)]
+
+      "We have to find some x∈s1 such that (h x y)"
+
+      "We proceed by case analysis on y"
+      (have <ysplit> (or (elem y (image f X s2))
+                         (elem y (diff s2 (image f X s2))))
+            :by ((alg/diff-split s2 (image f X s2)) y Hy))
+
+      (assume [Hyleft (elem y (image f X s2))]
+
+        (have <a> (exists-in [x X] (f x y)) 
+              :by (p/and-elim-right Hyleft)) 
+        
+        (assume [x T Hx (elem x X)
+                 Hf (f x y)]
+          
+          (have <b1> (elem x s1) :by ((p/and-elim-left Hrt) x Hx))
+
+          (have <b2> (h x y) 
+                :by ((ct-rel-left f g s1 s2 X) x y Hx Hf))
+
+          (have <b> (exists-in [x s1] (h x y))
+                :by ((sq/ex-in-intro s1 (lambda [$ T] (h $ y)) x)
+                     <b1> <b2>)))
+
+        (have <c> _ :by (sq/ex-in-elim <a> <b>)))
+
+      (assume [Hyright (elem y (diff s2 (image f X s2)))]
+      
+        (have <d1> (elem y s2) :by (p/and-elim-left Hyright)) 
+    
+        (have <d2> (exists-in [x s1] (g y x)) :by (Hgser y <d1>))
+      
+      
+
+        ))))
 
 
