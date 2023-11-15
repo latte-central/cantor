@@ -18,8 +18,12 @@
    ;; propositional logic
    [latte-prelude.prop :as p :refer [and and* or not]]
 
+   ;; equality
+   [latte-prelude.equal :as eq :refer [equal]]
+
    ;; basic sets
    [latte-sets.set :as s :refer [set elem subset seteq]]
+   [latte-sets.quant :as sq :refer [forall-in exists-in]]
 
    ;; boolean algebra for sets
    [latte-sets.algebra :as alg :refer [inter diff disjoint]]
@@ -27,6 +31,7 @@
    ;; basic relations
    [latte-sets.rel :as rel :refer [rel]]
    [latte-sets.ralgebra :as ralg :refer [rinverse]]
+
    
    ;; relations as partial functions
    [latte-sets.pfun :as pfun :refer [functional serial injective injection bijection
@@ -612,7 +617,6 @@
   (qed <g>))
 
 
-
 (definition ct-rel
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
   (lambda [x T]
@@ -621,4 +625,135 @@
            (==> (elem x (diff s1 X)) ((rinverse g) x y))))))
 
   
-)
+(deflemma ct-claim2
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
+  (==> (injective f s1 s2)
+       (functional g s2 s1)
+       (injective g s2 s1)
+       ;; right part of round-trip-prop
+       (seteq (image g (diff s2 (image f X s2)) s1)
+              (diff s1 X))
+       (injective (ct-rel f g s1 s2 X) s1 s2)))
+
+(proof 'ct-claim2-lemma
+  (assume [Hfinj _
+           Hgfun _
+           Hginj _
+           Hrt _]
+    (pose h := (ct-rel f g s1 s2 X))
+    (assume [x1 T Hx1 (elem x1 s1)
+             x2 T Hx2 (elem x2 s1)
+             y1 U Hy1 (elem y1 s2)
+             y2 U Hy2 (elem y2 s2)
+             Hh1 (h x1 y1)
+             Hh2 (h x2 y2)
+             Heq (equal y1 y2)]
+
+      (have <claim> (subset (image g (image f X s2) s1) X)
+            :by ((ct-claim1 f g s1 s2 X)
+                 Hginj Hrt))
+
+
+      "We have to show that x1=x2"
+      "We proceed by case analysis"
+
+      (have <x1split> (or (elem x1 X)
+                           (elem x1 (diff s1 X)))
+            :by ((alg/diff-split s1 X) x1 Hx1))
+
+      
+      (assume [Hx1left (elem x1 X)]
+      
+        (have <a> (f x1 y1) :by ((p/and-elim-left Hh1) Hx1left))
+
+        (have <x2split> (or (elem x2 X)
+                            (elem x2 (diff s1 X)))
+              :by ((alg/diff-split s1 X) x2 Hx2))
+
+        
+        (assume [Hx2left (elem x2 X)]
+
+          (have <b1> (f x2 y2) :by ((p/and-elim-left Hh2) Hx2left))
+
+          "Since f is injective we're done"
+          (have <b> (equal x1 x2) :by (Hfinj x1 Hx1 x2 Hx2 y1 Hy1 y2 Hy2 <a> <b1> Heq)))
+
+        (assume [Hx2right (elem x2 (diff s1 X))]
+          
+          (have <c1> (g y2 x2) :by ((p/and-elim-right Hh2) Hx2right))
+          
+          (have <c2> (f x1 y2) :by (eq/eq-subst (lambda [$ U] (f x1 $)) Heq <a>))
+
+          (have <c3> (elem y2 (image f X s2)) 
+                :by (p/and-intro Hy2 
+                                 ((sq/ex-in-intro X (lambda [$ T] (f $ y2)) x1)
+                                  Hx1left <c2>)))
+
+          (have <c4> (elem x2 (image g (image f X s2) s1))
+                :by (p/and-intro Hx2 
+                                 ((sq/ex-in-intro (image f X s2) (lambda [$ U] (g $ x2)) y2)
+                                  <c3> <c1>)))
+
+
+          (have <c5> (elem x2 X) :by (<claim> x2 <c4>))
+
+          "We reached a contradiction"
+          (have <c6> p/absurd :by ((p/and-elim-right Hx2right) <c5>))
+          
+          (have <c> (equal x1 x2) :by (<c6> (equal x1 x2))))
+
+        "We synthetize the two rught subcases"
+        (have <d> (equal x1 x2) :by (p/or-elim <x2split> <b> <c>)))
+
+      (assume [Hx1right (elem x1 (diff s1 X))]
+        
+        (have <e> (g y1 x1) :by ((p/and-elim-right Hh1) Hx1right))
+
+        (have <x2split'> (or (elem x2 X)
+                            (elem x2 (diff s1 X)))
+              :by ((alg/diff-split s1 X) x2 Hx2))
+      
+        (assume [Hx2left (elem x2 X)]
+          
+          (have <f> (f x2 y1) :by (eq/eq-subst (lambda [$ U] (f x2 $)) (eq/eq-sym Heq) ((p/and-elim-left Hh2) Hx2left)))
+
+           (have <g1> (elem y1 (image f X s2)) 
+                 :by (p/and-intro Hy1 
+                                  ((sq/ex-in-intro X (lambda [$ T] (f $ y1)) x2)
+                                   Hx2left <f>)))
+
+
+           (have <g2> (elem x1 (image g (image f X s2) s1))
+                 :by (p/and-intro Hx1 
+                                  ((sq/ex-in-intro (image f X s2) (lambda [$ U] (g $ x1)) y1)
+                                   <g1> <e>)))
+
+           (have <g3> (elem x1 X) :by (<claim> x1 <g2>))
+
+           (have <g4> p/absurd :by ((p/and-elim-right Hx1right) <g3>))
+
+           (have <g> (equal x1 x2) :by (<g4> (equal x1 x2))))
+
+        (assume [Hx2right (elem x2 (diff s1 X))]
+          
+          (have <h1> ((rinverse g) x1 y1) :by <e>)
+          (have <h2> ((rinverse g) x2 y2) :by ((p/and-elim-right Hh2) Hx2right))
+          (have <h3> (injective (rinverse g) s1 s2)
+                :by ((pfun/function-rinverse-injective g s2 s1) Hgfun))
+
+          "Since h is injective"
+          (have <h> (equal x1 x2) :by (<h3> x1 Hx1 x2 Hx2 y1 Hy1 y2 Hy2 <h1> <h2> Heq)))
+
+        "We synthetize the two right subcases"
+        (have <i> (equal x1 x2) :by (p/or-elim <x2split'> <g> <h>)))
+      
+      "We synthetize the two left subcases"
+      (have <j> (equal x1 x2) :by (p/or-elim <x1split> <d> <i>)))
+
+    (have <k> (injective (ct-rel f g s1 s2 X) s1 s2) :by <j>))
+
+  (qed <k>))
+
+
+
+
