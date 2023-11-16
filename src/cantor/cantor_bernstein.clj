@@ -34,7 +34,7 @@
 
    
    ;; relations as partial functions
-   [latte-sets.pfun :as pfun :refer [functional serial injective surjective injection bijection
+   [latte-sets.pfun :as pfun :refer [functional serial injective surjective bijective injection bijection
                                      image]]
    
    ;; quantifying sets
@@ -561,18 +561,6 @@
         (round-trip-inter f g s1 s2))))
 
 
-(comment
-
-
-
-(definition cb-assumptions
-  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
-  (and* (injection f s1 s2)
-        (injection g s2 s1)
-        (round-trip-prop f g s1 s2 X)))
-
-)
-
 (deflemma ct-claim1
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
   (==> (injective g s2 s1)
@@ -892,3 +880,53 @@
   (qed <h>))
 
 
+;; And now the proof of the main theorem
+
+(try-proof 'cantor-bernstein-thm
+  (assume [H1 (≲ s1 s2) 
+           H2 (≲ s2 s1)]
+    
+    "We have to prove (≈ s1 s2)"
+
+    "Leveraging H1"
+    (assume [f (rel T U)
+             Hf (injection f s1 s2)]
+
+      "Leveraging H2"
+      (assume [g (rel U T)
+               Hg (injection g s2 s1)]
+
+        "Leveraging the round-trip lemma"
+        (assume [X (set T) 
+                 Hrt (round-trip-prop f g s1 s2 X)]
+
+          "Our candidate bijection"
+          (pose h := (ct-rel f g s1 s2 X))
+
+          "First we prove that it is indeed bijective"
+          (have <a1> (injective f s1 s2)
+                :by (p/and-elim* 3 Hf))
+          (have <a2> (functional g s2 s1)
+                :by (p/and-elim* 1 Hg))
+          (have <a3> (injective g s2 s1)
+                :by (p/and-elim* 3 Hg))
+
+          (have <a> (injective h s1 s2)
+                :by ((ct-claim2 f g s1 s2 X)
+                     <a1> <a2> <a3> (p/and-elim-right Hrt)))
+
+          (have <b1> (serial g s2 s1)
+                :by (p/and-elim* 2 Hg))
+
+          (have <b> (surjective h s1 s2)
+                :by ((ct-claim3 f g s1 s2 X)
+                     <a1> <a2> <b1> <a3> Hrt))
+
+          (have <c> (bijective h s1 s2)
+                :by (p/and-intro <a> <b>))
+
+          "Now let's prove that it is functional (i.e. single-valued)"
+          
+
+)))))
+        
