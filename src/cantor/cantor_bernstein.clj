@@ -41,7 +41,7 @@
    [latte-sets.powerset :as pset :refer [powerset set-ex]]
 
    ;; quanoutifying relations
-r   [latte-sets.powerrel :as prel :refer [powerrel rel-ex]]
+   [latte-sets.powerrel :as prel :refer [powerrel rel-ex]]
 
    ))
 
@@ -650,8 +650,34 @@ r   [latte-sets.powerrel :as prel :refer [powerrel rel-ex]]
           :by (p/and-intro <a> <b>)))
   (qed <c>))
 
+(deflemma ct-rel-right
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
+  (forall [x T]
+    (forall [y U]
+      (==> (elem x (diff s1 X))
+           ((rinverse g) x y)
+           ((ct-rel f g s1 s2 X) x y)))))
 
-  
+(proof 'ct-rel-right-lemma
+  (assume [x T
+           y U
+           Hx (elem x (diff s1 X))
+           Hg ((rinverse g) x y)]
+
+    "left part - contradiction"
+    (assume [Hleft (elem x X)]
+      (have <a1> p/absurd :by ((p/and-elim-right Hx) Hleft))
+      (have <a> _ :by (<a1> (f x y))))
+    
+    "right part - trivial"
+    (assume [Hright (elem x (diff s1 X))]
+      (have <b> _ :by Hg))
+
+    (have <c> ((ct-rel f g s1 s2 X) x y)
+          :by (p/and-intro <a> <b>)))
+
+  (qed <c>))
+
 (deflemma ct-claim2
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
   (==> (injective f s1 s2)
@@ -790,7 +816,7 @@ r   [latte-sets.powerrel :as prel :refer [powerrel rel-ex]]
        (round-trip-prop f g s1 s2 X)
        (surjective (ct-rel f g s1 s2 X) s1 s2)))
 
-(try-proof 'ct-claim3-lemma
+(proof 'ct-claim3-lemma
   (assume [Hfinj _
            Hgfun _
            Hgser _
@@ -829,10 +855,40 @@ r   [latte-sets.powerrel :as prel :refer [powerrel rel-ex]]
       
         (have <d1> (elem y s2) :by (p/and-elim-left Hyright)) 
     
-        (have <d2> (exists-in [x s1] (g y x)) :by (Hgser y <d1>))
+        (have <d> (exists-in [x s1] (g y x)) :by (Hgser y <d1>))
       
-      
+        (assume [x T Hx (elem x s1)
+                 Hg (g y x)]
 
-        ))))
+          (have <e1> (elem x (image g (diff s2 (image f X s2)) s1))
+                
+                :by (p/and-intro 
+                     Hx
+                     ((sq/ex-in-intro (diff s2 (image f X s2))
+                                      (lambda [$ U] (g $ x))
+                                      y)
+                      Hyright Hg)))
+          
+          (have <e2> (subset (image g (diff s2 (image f X s2)) s1) (diff s1 X))
+                :by (p/and-elim-left (p/and-elim-right Hrt)))
+
+          (have <e3> (elem x (diff s1 X))
+                :by (<e2> x <e1>))
+
+          (have <e4> (h x y) :by ((ct-rel-right f g s1 s2 X)
+                                  x y <e3> Hg))
+
+          (have <e> (exists-in [x s1] (h x y))
+                :by ((sq/ex-in-intro s1 (lambda [$ T] (h $ y)) x)
+                     Hx <e4>)))
+
+        (have <f> _ :by (sq/ex-in-elim <d> <e>)))
+
+      (have <g> (exists-in [x s1] ((ct-rel f g s1 s2 X) x y)) 
+            :by (p/or-elim <ysplit> <c> <f>)))
+
+    (have <h> (surjective (ct-rel f g s1 s2 X) s1 s2) :by <g>))
+
+  (qed <h>))
 
 
