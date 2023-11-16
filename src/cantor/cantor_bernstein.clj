@@ -714,12 +714,14 @@
 (deflemma ct-rel-serial
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
   (==> (serial f s1 s2)
-       (surjective g s2 s1)
+       ;; right part of round-trip lemma
+       (seteq (image g (diff s2 (image f X s2)) s1)  ;; this replaces surjectivity for g
+              (diff s1 X))
        (serial (ct-rel f g s1 s2 X) s1 s2)))
 
 (proof 'ct-rel-serial-lemma
   (assume [Hfser _
-           Hgsur _]
+           Hrt _]
     (pose h := (ct-rel f g s1 s2 X))
 
     (assume [x T Hx (elem x s1)]
@@ -744,20 +746,18 @@
         (have <c> (exists-in [y s2] (h x y)) :by (sq/ex-in-elim <a> <b>)))
 
       (assume [Hright (elem x (diff s1 X))]
-        (surjective (rinverse g) s1 s2)
+        (have <d> (elem x (image g (diff s2 (image f X s2)) s1))
+              :by ((p/and-elim-right Hrt) x Hright))
 
-        (have <d> (serial (rinverse g) s1 s2)
-              :by ((pfun/surjective-inverse-serial g s2 s1) Hgsur))
-        ;; (forall-in [x s1] (exists-in [y s2] ((rinverse g) x y)))
-        
-        (have <e> (exists-in [y s2] ((rinverse g) x y)) :by (<d> x Hx))
+        (have <e> (exists-in [y (diff s2 (image f X s2))] (g y x))
+              :by (p/and-elim-right <d>))
 
-        (assume [y U Hy (elem y s2)
-                 Hrg ((rinverse g) x y)]
-          
-          (have <f1> (h x y) :by ((ct-rel-right f g s1 s2 X) x y Hright Hrg))
+        (assume [y U Hy (elem y (diff s2 (image f X s2)))
+                 Hg (g y x)]
+          (have <f1> (elem y s2) :by (p/and-elim-left Hy))
+          (have <f2> (h x y) :by ((ct-rel-right f g s1 s2 X) x y Hright Hg))
           (have <f> (exists-in [y s2] (h x y))
-                :by ((sq/ex-in-intro s2 (lambda [$ U] (h x $)) y) Hy <f1>)))
+                :by ((sq/ex-in-intro s2 (lambda [$ U] (h x $)) y) <f1> <f2>)))
 
         (have <g> (exists-in [y s2] (h x y)) :by (sq/ex-in-elim <e> <f>)))
         
@@ -983,7 +983,7 @@
 
 ;; And now the proof of the main theorem
 
-(try-proof 'cantor-bernstein-thm
+(proof 'cantor-bernstein-thm
   (assume [H1 (≲ s1 s2) 
            H2 (≲ s2 s1)]
     
@@ -1039,11 +1039,23 @@
 
           (have <e1> (serial f s1 s2) :by (p/and-elim* 2 Hf))
 
-          
-
           (have <e> (serial h s1 s2)
                 :by ((ct-rel-serial f g s1 s2 X)
-                     ))
+                     <e1> (p/and-elim-right Hrt)))
 
-)))))
-        
+          (have <f> (bijection h s1 s2)
+                :by (p/and-intro* <d> <e> <c>))
+
+          (have <g> (rel-ex (≈-prop s1 s2)) :by ((prel/rel-ex-intro (≈-prop s1 s2) h) <f>)))
+
+        "Apply the round-trip lemma"
+        (have <h> (≈ s1 s2) :by ((pset/set-ex-elim (lambda [$ (set T)]
+                                                     (round-trip-prop f g s1 s2 $)) 
+                                                   (≈ s1 s2))
+                                 (round-trip f g s1 s2) <g>)))
+
+      (have <i> (≈ s1 s2) :by ((prel/rel-ex-elim (≲-prop s2 s1) (≈ s1 s2)) H2 <h>)))
+
+    (have <j> (≈ s1 s2) :by ((prel/rel-ex-elim (≲-prop s1 s2) (≈ s1 s2)) H1 <i>)))
+
+  (qed <j>))
