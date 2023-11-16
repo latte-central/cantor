@@ -666,6 +666,62 @@
 
   (qed <c>))
 
+(deflemma ct-rel-functional
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
+  (==> (functional f s1 s2)
+       (injective g s2 s1)
+       (functional (ct-rel f g s1 s2 X) s1 s2)))
+
+(proof 'ct-rel-functional-lemma
+  (assume [Hffun _
+           Hginj _]
+    (pose h := (ct-rel f g s1 s2 X))
+    (assume [x T Hx (elem x s1)]
+      (assume [y1 U Hy1 (elem y1 s2)
+               y2 U Hy2 (elem y2 s2)
+               Hh1 (h x y1)
+               Hh2 (h x y2)]
+        "We have to show: y1=y2"
+
+        "We proceed by case analysis"
+        (have <xsplit> (or (elem x X)
+                           (elem x (diff s1 X)))
+            :by ((alg/diff-split s1 X) x Hx))
+
+        (assume [Hleft (elem x X)]
+          (have <a> (f x y1) :by ((p/and-elim-left Hh1) Hleft))
+          (have <b> (f x y2) :by ((p/and-elim-left Hh2) Hleft))
+
+          (have <c> (equal y1 y2)
+                :by ((sq/single-in-elim (Hffun x Hx) y1 y2)
+                     Hy1 Hy2 <a> <b>)) )
+
+        (assume [Hright (elem x (diff s1 X))]
+          (have <d> (g y1 x) :by ((p/and-elim-right Hh1) Hright))
+          (have <e> (g y2 x) :by ((p/and-elim-right Hh2) Hright))
+          (have <f> (equal y1 y2)
+                :by (Hginj y1 Hy1 y2 Hy2 x Hx x Hx <d> <e> (eq/eq-refl x))))
+
+        (have <g> (equal y1 y2) :by (p/or-elim <xsplit> <c> <f>)))
+
+      (have <h> _ :by ((sq/single-in-intro s2 (lambda [$ U] (h x $))) <g>)))
+
+    (have <i> (functional (ct-rel f g s1 s2 X) s1 s2)
+          :by <h>))
+
+  (qed <i>))
+
+
+
+(deflemma ct-rel-functional
+  [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
+  (==> (serial f s1 s2)
+       (surjective g s2 s1)
+       (serial (ct-rel f g s1 s2 X) s1 s2)))
+
+;; proof TODO
+
+
 (deflemma ct-claim2
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
   (==> (injective f s1 s2)
