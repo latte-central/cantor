@@ -711,16 +711,61 @@
 
   (qed <i>))
 
-
-
-(deflemma ct-rel-functional
+(deflemma ct-rel-serial
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
   (==> (serial f s1 s2)
        (surjective g s2 s1)
        (serial (ct-rel f g s1 s2 X) s1 s2)))
 
-;; proof TODO
+(proof 'ct-rel-serial-lemma
+  (assume [Hfser _
+           Hgsur _]
+    (pose h := (ct-rel f g s1 s2 X))
 
+    (assume [x T Hx (elem x s1)]
+
+      "We have to show:  ∃y∈s2, (h x y)"
+
+      "We proceed by case analysis"
+      (have <xsplit> (or (elem x X)
+                         (elem x (diff s1 X)))
+            :by ((alg/diff-split s1 X) x Hx))
+      
+      (assume [Hleft (elem x X)]
+        (have <a> (sq/exists-in [y s2] (f x y))
+              :by (Hfser x Hx))
+        
+        (assume [y U Hy (elem y s2)
+                 Hf (f x y)]
+          (have <b1> (h x y) :by ((ct-rel-left f g s1 s2 X) x y Hleft Hf))
+          (have <b> (exists-in [y s2] (h x y))
+                :by ((sq/ex-in-intro s2 (lambda [$ U] (h x $)) y) Hy <b1>)))
+
+        (have <c> (exists-in [y s2] (h x y)) :by (sq/ex-in-elim <a> <b>)))
+
+      (assume [Hright (elem x (diff s1 X))]
+        (surjective (rinverse g) s1 s2)
+
+        (have <d> (serial (rinverse g) s1 s2)
+              :by ((pfun/surjective-inverse-serial g s2 s1) Hgsur))
+        ;; (forall-in [x s1] (exists-in [y s2] ((rinverse g) x y)))
+        
+        (have <e> (exists-in [y s2] ((rinverse g) x y)) :by (<d> x Hx))
+
+        (assume [y U Hy (elem y s2)
+                 Hrg ((rinverse g) x y)]
+          
+          (have <f1> (h x y) :by ((ct-rel-right f g s1 s2 X) x y Hright Hrg))
+          (have <f> (exists-in [y s2] (h x y))
+                :by ((sq/ex-in-intro s2 (lambda [$ U] (h x $)) y) Hy <f1>)))
+
+        (have <g> (exists-in [y s2] (h x y)) :by (sq/ex-in-elim <e> <f>)))
+        
+      (have <h> _ :by (p/or-elim <xsplit> <c> <g>)))
+
+    (have <i> (serial (ct-rel f g s1 s2 X) s1 s2) :by <h>))
+ 
+  (qed <i>))
 
 (deflemma ct-claim2
   [[?T ?U :type] [f (rel T U)] [g (rel U T)] [s1 (set T)] [s2 (set U)] [X (set T)]]
@@ -959,7 +1004,7 @@
           "Our candidate bijection"
           (pose h := (ct-rel f g s1 s2 X))
 
-          "First we prove that it is indeed bijective"
+          "First, we prove that it is indeed bijective"
           (have <a1> (injective f s1 s2)
                 :by (p/and-elim* 3 Hf))
           (have <a2> (functional g s2 s1)
@@ -983,6 +1028,22 @@
 
           "Now let's prove that it is functional (i.e. single-valued)"
           
+          (have <d1> (functional f s1 s2) :by (p/and-elim* 1 Hf))
+
+          (have <d> (functional h s1 s2)
+                :by ((ct-rel-functional f g s1 s2 X)
+                     <d1> <a3>))
+
+
+          "And finally let's prove it is serial (i.e. total on s1)"
+
+          (have <e1> (serial f s1 s2) :by (p/and-elim* 2 Hf))
+
+          
+
+          (have <e> (serial h s1 s2)
+                :by ((ct-rel-serial f g s1 s2 X)
+                     ))
 
 )))))
         
